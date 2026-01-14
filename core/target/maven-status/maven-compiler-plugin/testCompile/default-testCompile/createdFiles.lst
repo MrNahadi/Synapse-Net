@@ -1,0 +1,7 @@
+com/telecom/distributed/core/NodeCharacteristicsPreservationTest.class
+com/telecom/distributed/core/TransactionLoadDistributionTest.class
+com/telecom/distributed/core/MemoryLoadDistributionTest.class
+com/telecom/distributed/core/HeterogeneityAwareBalancingTest.class
+com/telecom/distributed/core/CpuLoadDistributionTest.class
+com/telecom/distributed/core/PerformanceAnalyzerTest.class
+com/telecom/distributed/core/HeterogeneityAwareBalancingTest$1.class

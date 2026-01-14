@@ -1,0 +1,7 @@
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/MemoryLoadDistributionTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/HeterogeneityAwareBalancingTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/TransactionLoadDistributionTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/BottleneckRankingConsistencyTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/NodeCharacteristicsPreservationTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/PerformanceAnalyzerTest.java
+/home/nahadi/Documents/CAT_2/core/src/test/java/com/telecom/distributed/core/CpuLoadDistributionTest.java
