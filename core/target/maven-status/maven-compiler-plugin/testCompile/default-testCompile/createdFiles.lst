@@ -1,5 +1,9 @@
+com/telecom/distributed/core/ServiceAvailabilityDuringMigrationTest.class
+com/telecom/distributed/core/ServiceDiscoveryCorrectnessTest.class
 com/telecom/distributed/core/NodeCharacteristicsPreservationTest.class
 com/telecom/distributed/core/TransactionLoadDistributionTest.class
+com/telecom/distributed/core/StrongConsistencyUnderConcurrencyTest.class
+com/telecom/distributed/core/ReplicationManagerTest.class
 com/telecom/distributed/core/MemoryLoadDistributionTest.class
 com/telecom/distributed/core/HeterogeneityAwareBalancingTest.class
 com/telecom/distributed/core/CpuLoadDistributionTest.class

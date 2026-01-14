@@ -1,5 +1,6 @@
 com/telecom/distributed/core/model/CommitResult.class
 com/telecom/distributed/core/model/ConstraintType.class
+com/telecom/distributed/core/model/ReplicationGroup.class
 com/telecom/distributed/core/model/TransactionPattern.class
 com/telecom/distributed/core/model/ResourceLock.class
 com/telecom/distributed/core/model/OptimizationScenario.class
@@ -12,6 +13,7 @@ com/telecom/distributed/core/ResourceConstraintEnforcer.class
 com/telecom/distributed/core/model/FailureModel.class
 com/telecom/distributed/core/ControlFlowRouter$RoutingTable.class
 com/telecom/distributed/core/model/LoadBalancingMetrics.class
+com/telecom/distributed/core/model/ServiceStatus.class
 com/telecom/distributed/core/factory/NodeFactory.class
 com/telecom/distributed/core/model/HealthStatus.class
 com/telecom/distributed/core/model/ReplicationStrategy$ConsistencyLevel.class
@@ -29,6 +31,7 @@ com/telecom/distributed/core/model/AdaptationAction.class
 com/telecom/distributed/core/CoordinationMechanisms$OmissionFaultTolerantConsensus.class
 com/telecom/distributed/core/model/SystemHealthAssessment.class
 com/telecom/distributed/core/model/NodeMetrics.class
+com/telecom/distributed/core/model/MigrationStatus.class
 com/telecom/distributed/core/model/NodeId.class
 com/telecom/distributed/core/CoordinationMechanisms$CoreCoordinationStrategy.class
 com/telecom/distributed/core/ServicePlacementStrategy.class
@@ -36,6 +39,7 @@ com/telecom/distributed/core/impl/FaultToleranceManagerImpl$1.class
 com/telecom/distributed/core/model/MonteCarloResult.class
 com/telecom/distributed/core/model/AnalyticalResult.class
 com/telecom/distributed/core/model/OptimizationStatus.class
+com/telecom/distributed/core/ReplicationManager.class
 com/telecom/distributed/core/model/ValidationIssueType.class
 com/telecom/distributed/core/MonteCarloSimulator.class
 com/telecom/distributed/core/model/MessageType.class
@@ -67,6 +71,7 @@ com/telecom/distributed/core/model/SystemHealthAssessment$SystemHealthStatus.cla
 com/telecom/distributed/core/CoordinationMechanisms$EdgeCoordinationStrategy.class
 com/telecom/distributed/core/model/ValidationIssue.class
 com/telecom/distributed/core/model/TrafficPattern.class
+com/telecom/distributed/core/model/MigrationId.class
 com/telecom/distributed/core/model/ConstraintViolation.class
 com/telecom/distributed/core/impl/LoadBalancerImpl$1.class
 com/telecom/distributed/core/model/OptimizationAction.class
@@ -75,6 +80,7 @@ com/telecom/distributed/core/model/ServiceRequest.class
 com/telecom/distributed/core/model/NetworkPartition.class
 com/telecom/distributed/core/model/AdaptationResult.class
 com/telecom/distributed/core/model/PerformancePrediction.class
+com/telecom/distributed/core/model/GroupId.class
 com/telecom/distributed/core/impl/LoadBalancerImpl.class
 com/telecom/distributed/core/AdaptationPolicyManager.class
 com/telecom/distributed/core/model/OpportunityType.class
@@ -93,12 +99,15 @@ com/telecom/distributed/core/model/FailureType.class
 com/telecom/distributed/core/model/PrepareResponse.class
 com/telecom/distributed/core/model/HealthStatus$Status.class
 com/telecom/distributed/core/model/FailureDetector.class
+com/telecom/distributed/core/model/MigrationStrategy.class
+com/telecom/distributed/core/model/MigrationPlan.class
 com/telecom/distributed/core/model/LockType.class
 com/telecom/distributed/core/model/FaultToleranceConfiguration.class
 com/telecom/distributed/core/model/ReplicationStrategy$ReplicationType.class
 com/telecom/distributed/core/impl/TransactionManagerImpl.class
 com/telecom/distributed/core/model/ThroughputOptimizationResult.class
 com/telecom/distributed/core/model/LoadBalancingStrategy.class
+com/telecom/distributed/core/model/ServiceLocation.class
 com/telecom/distributed/core/model/ServiceId.class
 com/telecom/distributed/core/model/NodeLayer.class
 com/telecom/distributed/core/ControlFlowRouter$PerformanceOptimizer.class
@@ -113,6 +122,7 @@ com/telecom/distributed/core/SimulationFramework.class
 com/telecom/distributed/core/model/ResourceUtilizationPrediction.class
 com/telecom/distributed/core/DynamicAdaptationEngine.class
 com/telecom/distributed/core/impl/EventOrderingServiceImpl.class
+com/telecom/distributed/core/ReplicationManager$1.class
 com/telecom/distributed/core/impl/TransactionManagerImpl$TransactionStatistics.class
 com/telecom/distributed/core/model/NetworkPartition$PartitionType.class
 com/telecom/distributed/core/model/ValidationResult.class
