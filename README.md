@@ -76,10 +76,6 @@ graph TB
 ### Installation
 
 1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/distributed-telecom-system.git
-   cd distributed-telecom-system
-   ```
 
 2. Build the Java components
    ```bash
