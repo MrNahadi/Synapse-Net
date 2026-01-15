@@ -9,11 +9,13 @@ from .failure_injection import FailureInjector
 from .network_delay_simulator import NetworkDelaySimulator
 from .adaptive_migration import AdaptiveMigrationEngine
 from .java_integration import JavaLoadBalancerIntegration
+from .redundancy_failover import RedundancyFailoverManager
 
 __all__ = [
     'LoadBalancerSimulation',
     'FailureInjector', 
     'NetworkDelaySimulator',
     'AdaptiveMigrationEngine',
-    'JavaLoadBalancerIntegration'
+    'JavaLoadBalancerIntegration',
+    'RedundancyFailoverManager'
 ]

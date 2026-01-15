@@ -1,5 +1,6 @@
 package com.telecom.distributed.core.model;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -12,12 +13,35 @@ public class OptimizationAction {
     private final double expectedImprovement;
     private boolean applied = false;
     
+    // Additional fields for specific action types
+    private ServiceId serviceId;
+    private NodeId targetNode;
+    private int replicationFactor;
+    private Map<NodeId, Double> nodeWeights;
+    
     public OptimizationAction(ActionType actionType, NodeId nodeId, 
                             String description, double expectedImprovement) {
         this.actionType = Objects.requireNonNull(actionType);
         this.nodeId = Objects.requireNonNull(nodeId);
         this.description = Objects.requireNonNull(description);
         this.expectedImprovement = expectedImprovement;
+    }
+    
+    public OptimizationAction withServiceMigration(ServiceId serviceId, NodeId targetNode) {
+        this.serviceId = serviceId;
+        this.targetNode = targetNode;
+        return this;
+    }
+    
+    public OptimizationAction withReplicationAdjustment(ServiceId serviceId, int replicationFactor) {
+        this.serviceId = serviceId;
+        this.replicationFactor = replicationFactor;
+        return this;
+    }
+    
+    public OptimizationAction withLoadBalancingUpdate(Map<NodeId, Double> nodeWeights) {
+        this.nodeWeights = nodeWeights;
+        return this;
     }
     
     /**
@@ -30,10 +54,16 @@ public class OptimizationAction {
     }
     
     public ActionType getActionType() { return actionType; }
+    public ActionType getType() { return actionType; }
     public NodeId getNodeId() { return nodeId; }
     public String getDescription() { return description; }
     public double getExpectedImprovement() { return expectedImprovement; }
     public boolean isApplied() { return applied; }
+    
+    public ServiceId getServiceId() { return serviceId; }
+    public NodeId getTargetNode() { return targetNode; }
+    public int getReplicationFactor() { return replicationFactor; }
+    public Map<NodeId, Double> getNodeWeights() { return nodeWeights; }
     
     @Override
     public boolean equals(Object o) {

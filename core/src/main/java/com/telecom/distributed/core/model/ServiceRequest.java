@@ -12,16 +12,30 @@ public class ServiceRequest {
     private final double memoryRequirement;   // Memory in GB required
     private final int transactionLoad;        // Expected transactions per second
     private final int priority;               // Request priority (1-10, higher is more important)
+    private final String operation;           // Operation to perform
+    private final byte[] payload;             // Request payload
+    private final boolean requiresTransaction; // Whether this request needs a transaction
 
     public ServiceRequest(ServiceId serviceId, ServiceType serviceType, 
                          double cpuRequirement, double memoryRequirement, 
                          int transactionLoad, int priority) {
+        this(serviceId, serviceType, cpuRequirement, memoryRequirement, 
+             transactionLoad, priority, "default", new byte[0], false);
+    }
+    
+    public ServiceRequest(ServiceId serviceId, ServiceType serviceType, 
+                         double cpuRequirement, double memoryRequirement, 
+                         int transactionLoad, int priority,
+                         String operation, byte[] payload, boolean requiresTransaction) {
         this.serviceId = Objects.requireNonNull(serviceId, "Service ID cannot be null");
         this.serviceType = Objects.requireNonNull(serviceType, "Service type cannot be null");
         this.cpuRequirement = validateCpuRequirement(cpuRequirement);
         this.memoryRequirement = validateMemoryRequirement(memoryRequirement);
         this.transactionLoad = validateTransactionLoad(transactionLoad);
         this.priority = validatePriority(priority);
+        this.operation = Objects.requireNonNull(operation, "Operation cannot be null");
+        this.payload = Objects.requireNonNull(payload, "Payload cannot be null");
+        this.requiresTransaction = requiresTransaction;
     }
 
     private double validateCpuRequirement(double cpuRequirement) {
@@ -59,6 +73,9 @@ public class ServiceRequest {
     public double getMemoryRequirement() { return memoryRequirement; }
     public int getTransactionLoad() { return transactionLoad; }
     public int getPriority() { return priority; }
+    public String getOperation() { return operation; }
+    public byte[] getPayload() { return payload; }
+    public boolean requiresTransaction() { return requiresTransaction; }
 
     @Override
     public boolean equals(Object o) {

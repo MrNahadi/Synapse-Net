@@ -13,8 +13,10 @@ public enum MessageType {
     FAILURE_NOTIFICATION("Node failure notification"),
     LOAD_BALANCING("Load balancing coordination message"),
     REPLICATION("Data replication message"),
+    REPLICATION_SYNC("Replication synchronization message"),
     CONSENSUS("Consensus protocol message"),
-    EVENT_ORDERING("Event ordering message");
+    EVENT_ORDERING("Event ordering message"),
+    HEALTH_CHECK("Health check request/response");
 
     private final String description;
 

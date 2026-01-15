@@ -23,6 +23,18 @@ public class ServiceLocation {
         this.endpoint = Objects.requireNonNull(endpoint, "Endpoint cannot be null");
         this.version = validateVersion(version);
     }
+    
+    // Simplified constructor for basic service location
+    public ServiceLocation(NodeId currentNode, ServiceStatus status) {
+        this(ServiceId.RPC_HANDLER, currentNode, status, Instant.now(), 
+             "http://" + currentNode.getId() + ":8080", 1);
+    }
+    
+    // Constructor with service ID
+    public ServiceLocation(ServiceId serviceId, NodeId currentNode, ServiceStatus status) {
+        this(serviceId, currentNode, status, Instant.now(),
+             "http://" + currentNode.getId() + ":8080/services/" + serviceId.getId(), 1);
+    }
 
     private int validateVersion(int version) {
         if (version < 0) {
@@ -54,6 +66,7 @@ public class ServiceLocation {
     // Getters
     public ServiceId getServiceId() { return serviceId; }
     public NodeId getCurrentNode() { return currentNode; }
+    public NodeId getNodeId() { return currentNode; }  // Alias for getCurrentNode
     public ServiceStatus getStatus() { return status; }
     public Instant getLastUpdated() { return lastUpdated; }
     public String getEndpoint() { return endpoint; }

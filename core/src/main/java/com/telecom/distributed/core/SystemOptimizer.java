@@ -57,6 +57,13 @@ public class SystemOptimizer {
     }
     
     /**
+     * Optimizes system based on current metrics (convenience method).
+     */
+    public OptimizationResult optimize(Map<NodeId, NodeMetrics> currentMetrics) {
+        return optimizeSystemThroughput(currentMetrics.keySet());
+    }
+    
+    /**
      * Adapts system behavior to dynamic traffic and transaction patterns.
      * @param trafficPattern Current traffic pattern
      * @param transactionPattern Current transaction pattern

@@ -27,6 +27,11 @@ public class RPCResponse {
     public static RPCResponse error(String requestId, Exception error, long responseTime) {
         return new RPCResponse(requestId, null, error, responseTime);
     }
+    
+    // Constructor for message-based responses
+    public RPCResponse(MessageId messageId, byte[] payload, boolean success, Exception error) {
+        this(messageId.toString(), payload, error, System.currentTimeMillis());
+    }
 
     // Getters
     public String getRequestId() { return requestId; }

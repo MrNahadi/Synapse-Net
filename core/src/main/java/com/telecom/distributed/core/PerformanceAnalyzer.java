@@ -47,6 +47,13 @@ public class PerformanceAnalyzer {
     }
     
     /**
+     * Identifies bottlenecks in the system (alias for analyzeBottlenecks).
+     */
+    public List<BottleneckAnalysis> identifyBottlenecks(Map<NodeId, NodeMetrics> nodeMetrics) {
+        return analyzeBottlenecks(nodeMetrics);
+    }
+    
+    /**
      * Calculates comprehensive bottleneck score using all performance metrics.
      * Includes non-linear interaction analysis between performance factors.
      */

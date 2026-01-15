@@ -4,8 +4,7 @@ import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import com.pholser.junit.quickcheck.generator.InRange;
 import com.telecom.distributed.core.model.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
@@ -21,7 +20,6 @@ import static org.mockito.Mockito.*;
  * **Validates: Requirements 9.3**
  */
 @RunWith(JUnitQuickcheck.class)
-@Tag("Feature: distributed-telecom-system, Property 22: Service Discovery Correctness")
 public class ServiceDiscoveryCorrectnessTest {
 
     private ReplicationManager replicationManager;
@@ -29,7 +27,7 @@ public class ServiceDiscoveryCorrectnessTest {
     private TransactionManager mockTransactionManager;
     private CommunicationManager mockCommunicationManager;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         mockPerformanceAnalyzer = mock(PerformanceAnalyzer.class);
         mockTransactionManager = mock(TransactionManager.class);
@@ -39,11 +37,17 @@ public class ServiceDiscoveryCorrectnessTest {
         when(mockTransactionManager.beginTransaction()).thenReturn(new TransactionId("tx-test"));
         when(mockTransactionManager.commit(any())).thenReturn(CommitResult.COMMITTED);
         when(mockPerformanceAnalyzer.analyzeBottlenecks(any())).thenReturn(
-            Arrays.asList(new BottleneckAnalysis(new NodeId("edge1"), BottleneckType.CPU, 0.5, 
+            Arrays.asList(new BottleneckAnalysis(NodeId.EDGE1, BottleneckType.CPU, 0.5, 
                 "Test bottleneck", Collections.emptySet()))
         );
         
         replicationManager = new ReplicationManager(mockPerformanceAnalyzer, mockTransactionManager, mockCommunicationManager);
+    }
+    
+    // Helper method to get a valid NodeId from a number
+    private NodeId getNodeId(int number) {
+        NodeId[] nodes = {NodeId.EDGE1, NodeId.EDGE2, NodeId.CORE1, NodeId.CORE2, NodeId.CLOUD1};
+        return nodes[number % 5];
     }
 
     /**
@@ -57,8 +61,8 @@ public class ServiceDiscoveryCorrectnessTest {
         
         // Create test data
         ServiceId serviceId = new ServiceId("discovery-service-" + serviceNumber);
-        NodeId nodeId = new NodeId("node-" + nodeNumber);
-        String expectedEndpoint = "http://node-" + nodeNumber + ":8080/services/discovery-service-" + serviceNumber;
+        NodeId nodeId = getNodeId(nodeNumber);
+        String expectedEndpoint = "http://" + nodeId.getId() + ":8080/services/discovery-service-" + serviceNumber;
         
         // Register service at specific location
         replicationManager.registerService(serviceId, nodeId, ServiceStatus.ACTIVE, expectedEndpoint);
@@ -91,10 +95,10 @@ public class ServiceDiscoveryCorrectnessTest {
         }
         
         ServiceId serviceId = new ServiceId("update-service-" + serviceNumber);
-        NodeId initialNode = new NodeId("initial-node-" + initialNodeNumber);
-        NodeId updatedNode = new NodeId("updated-node-" + updatedNodeNumber);
+        NodeId initialNode = getNodeId(initialNodeNumber);
+        NodeId updatedNode = getNodeId(updatedNodeNumber);
         
-        String initialEndpoint = "http://initial-node-" + initialNodeNumber + ":8080/services/update-service-" + serviceNumber;
+        String initialEndpoint = "http://" + initialNode.getId() + ":8080/services/update-service-" + serviceNumber;
         String updatedEndpoint = "http://updated-node-" + updatedNodeNumber + ":8080/services/update-service-" + serviceNumber;
         
         // Register service at initial location
@@ -129,8 +133,8 @@ public class ServiceDiscoveryCorrectnessTest {
             @InRange(min = "1", max = "3") int nodeNumber) {
         
         ServiceId serviceId = new ServiceId("consistent-service-" + serviceNumber);
-        NodeId nodeId = new NodeId("consistent-node-" + nodeNumber);
-        String endpoint = "http://consistent-node-" + nodeNumber + ":8080/services/consistent-service-" + serviceNumber;
+        NodeId nodeId = getNodeId(nodeNumber);
+        String endpoint = "http://" + nodeId.getId() + ":8080/services/consistent-service-" + serviceNumber;
         
         // Register service
         replicationManager.registerService(serviceId, nodeId, ServiceStatus.ACTIVE, endpoint);
@@ -191,8 +195,8 @@ public class ServiceDiscoveryCorrectnessTest {
         
         ServiceId serviceId = new ServiceId("replicated-service-" + groupNumber);
         GroupId groupId = new GroupId("replication-group-" + groupNumber);
-        NodeId primaryNode = new NodeId("primary-node-" + primaryNodeNumber);
-        NodeId replicaNode = new NodeId("replica-node-" + ((primaryNodeNumber % 3) + 1));
+        NodeId primaryNode = getNodeId(primaryNodeNumber);
+        NodeId replicaNode = getNodeId((primaryNodeNumber + 1) % 5);
         
         Set<NodeId> candidateNodes = new HashSet<>();
         candidateNodes.add(primaryNode);

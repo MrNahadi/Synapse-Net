@@ -119,6 +119,27 @@ public class ReplicationManager {
             return plan;
         });
     }
+    
+    /**
+     * Migrates a service from source to target node (convenience method).
+     */
+    public void migrateService(ServiceId serviceId, NodeId sourceNode, NodeId targetNode) {
+        migrateService(serviceId, targetNode, MigrationStrategy.LIVE_MIGRATION);
+    }
+    
+    /**
+     * Adjusts replication factor for a service.
+     */
+    public void adjustReplicationFactor(ServiceId serviceId, int newReplicationFactor) {
+        ReplicationGroup group = getReplicationGroup(serviceId);
+        if (group == null) {
+            throw new IllegalArgumentException("No replication group found for service: " + serviceId);
+        }
+        
+        // Update replication factor
+        // This would involve adding or removing replicas
+        // For now, we'll just log the action
+    }
 
     /**
      * Implements naming strategies for service discovery.

@@ -35,6 +35,7 @@ public class FailureModel {
 
     // Getters
     public FailureType getPrimaryFailureType() { return primaryFailureType; }
+    public FailureType getFailureType() { return primaryFailureType; } // Alias for compatibility
     public double getFailureProbability() { return failureProbability; }
     public long getDetectionTimeoutMs() { return detectionTimeoutMs; }
     public long getRecoveryTimeoutMs() { return recoveryTimeoutMs; }

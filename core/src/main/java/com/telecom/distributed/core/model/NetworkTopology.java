@@ -41,6 +41,11 @@ public class NetworkTopology {
     public boolean isConnectedTo(NodeId nodeId) {
         return connectedNodes.contains(nodeId);
     }
+    
+    public boolean isConnected(NodeId from, NodeId to) {
+        // Check if 'from' node (this topology's owner) is connected to 'to' node
+        return connectedNodes.contains(to);
+    }
 
     public double getLatencyTo(NodeId nodeId) {
         return connectionLatencies.getOrDefault(nodeId, Double.MAX_VALUE);

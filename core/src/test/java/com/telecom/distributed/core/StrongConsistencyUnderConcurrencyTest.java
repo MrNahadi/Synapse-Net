@@ -4,8 +4,7 @@ import com.pholser.junit.quickcheck.Property;
 import com.pholser.junit.quickcheck.runner.JUnitQuickcheck;
 import com.pholser.junit.quickcheck.generator.InRange;
 import com.telecom.distributed.core.model.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 
 import java.util.*;
@@ -21,7 +20,6 @@ import static org.mockito.Mockito.*;
  * **Validates: Requirements 9.4**
  */
 @RunWith(JUnitQuickcheck.class)
-@Tag("Feature: distributed-telecom-system, Property 23: Strong Consistency Under Concurrency")
 public class StrongConsistencyUnderConcurrencyTest {
 
     private ReplicationManager replicationManager;
@@ -31,7 +29,7 @@ public class StrongConsistencyUnderConcurrencyTest {
     private ExecutorService executorService;
     private AtomicInteger transactionIdCounter;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         mockPerformanceAnalyzer = mock(PerformanceAnalyzer.class);
         mockTransactionManager = mock(TransactionManager.class);
@@ -44,11 +42,17 @@ public class StrongConsistencyUnderConcurrencyTest {
             new TransactionId("tx-" + transactionIdCounter.incrementAndGet()));
         when(mockTransactionManager.commit(any())).thenReturn(CommitResult.COMMITTED);
         when(mockPerformanceAnalyzer.analyzeBottlenecks(any())).thenReturn(
-            Arrays.asList(new BottleneckAnalysis(new NodeId("edge1"), BottleneckType.CPU, 0.5, 
+            Arrays.asList(new BottleneckAnalysis(NodeId.EDGE1, BottleneckType.CPU, 0.5, 
                 "Test bottleneck", Collections.emptySet()))
         );
         
         replicationManager = new ReplicationManager(mockPerformanceAnalyzer, mockTransactionManager, mockCommunicationManager);
+    }
+    
+    // Helper method to get a valid NodeId from a number
+    private NodeId getNodeId(int number) {
+        NodeId[] nodes = {NodeId.EDGE1, NodeId.EDGE2, NodeId.CORE1, NodeId.CORE2, NodeId.CLOUD1};
+        return nodes[number % 5];
     }
 
     /**
@@ -67,7 +71,7 @@ public class StrongConsistencyUnderConcurrencyTest {
         
         for (int i = 1; i <= numberOfServices; i++) {
             services.add(new ServiceId("concurrent-service-" + i));
-            nodes.add(new NodeId("node-" + i));
+            nodes.add(getNodeId(i));
         }
         
         // Create concurrent tasks that register services
@@ -134,8 +138,8 @@ public class StrongConsistencyUnderConcurrencyTest {
             @InRange(min = "2", max = "4") int numberOfUpdates) {
         
         ServiceId serviceId = new ServiceId("update-service-" + serviceNumber);
-        NodeId initialNode = new NodeId("initial-node");
-        String initialEndpoint = "http://initial-node:8080/services/update-service-" + serviceNumber;
+        NodeId initialNode = NodeId.EDGE1;
+        String initialEndpoint = "http://" + initialNode.getId() + ":8080/services/update-service-" + serviceNumber;
         
         // Register initial service
         replicationManager.registerService(serviceId, initialNode, ServiceStatus.ACTIVE, initialEndpoint);
@@ -148,8 +152,8 @@ public class StrongConsistencyUnderConcurrencyTest {
         for (int i = 0; i < numberOfUpdates; i++) {
             final int updateId = i;
             CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
-                NodeId updateNode = new NodeId("update-node-" + updateId);
-                String updateEndpoint = "http://update-node-" + updateId + ":8080/services/update-service-" + serviceNumber;
+                NodeId updateNode = getNodeId(updateId);
+                String updateEndpoint = "http://" + updateNode.getId() + ":8080/services/update-service-" + serviceNumber;
                 
                 try {
                     replicationManager.updateServiceLocation(serviceId, updateNode, updateEndpoint);
@@ -198,9 +202,9 @@ public class StrongConsistencyUnderConcurrencyTest {
         ServiceId serviceId = new ServiceId("group-service-" + groupNumber);
         
         Set<NodeId> candidateNodes = new HashSet<>();
-        candidateNodes.add(new NodeId("node-1"));
-        candidateNodes.add(new NodeId("node-2"));
-        candidateNodes.add(new NodeId("node-3"));
+        candidateNodes.add(NodeId.EDGE1);
+        candidateNodes.add(NodeId.EDGE2);
+        candidateNodes.add(NodeId.CORE1);
         
         // Create concurrent tasks that try to create replication groups
         List<CompletableFuture<ReplicationGroup>> groupCreationTasks = new ArrayList<>();
@@ -261,9 +265,9 @@ public class StrongConsistencyUnderConcurrencyTest {
         
         ServiceId serviceId = new ServiceId("linearizable-service-" + serviceNumber);
         List<NodeId> nodes = Arrays.asList(
-            new NodeId("linear-node-1"),
-            new NodeId("linear-node-2"),
-            new NodeId("linear-node-3")
+            NodeId.EDGE1,
+            NodeId.EDGE2,
+            NodeId.CORE1
         );
         
         // Create a sequence of operations that should be linearizable

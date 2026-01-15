@@ -75,6 +75,15 @@ public class SystemHealthAssessment {
 
     // Getters
     public SystemHealthStatus getOverallStatus() { return overallStatus; }
+    public HealthStatus.Status getOverallHealth() { 
+        switch (overallStatus) {
+            case HEALTHY: return HealthStatus.Status.HEALTHY;
+            case DEGRADED: return HealthStatus.Status.DEGRADED;
+            case CRITICAL: return HealthStatus.Status.DEGRADED;
+            case FAILED: return HealthStatus.Status.FAILED;
+            default: return HealthStatus.Status.UNHEALTHY;
+        }
+    }
     public Map<NodeId, HealthStatus> getNodeHealthMap() { return nodeHealthMap; }
     public Set<NodeId> getFailedNodes() { return failedNodes; }
     public Set<NodeId> getDegradedNodes() { return degradedNodes; }
