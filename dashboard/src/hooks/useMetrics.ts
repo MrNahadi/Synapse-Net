@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { SystemMetrics, TransactionData, FailoverEvent } from '../types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { SystemMetrics, TransactionData, FailoverEvent, NodeData } from '../types';
 
 const API_BASE = '/api';
 
-// Generate mock data for demo when backend is not available
 function generateMockMetrics(): SystemMetrics {
     const baseMetrics = {
         EDGE1: { latency: 12, throughput: 500, cpu: 45, memory: 8.0, tx: 150, lock: 8 },
@@ -79,15 +78,36 @@ function generateMockFailoverEvents(): FailoverEvent[] {
     });
 }
 
-export function useMetrics(refreshInterval = 2000) {
+export interface MetricsWithHistory {
+    metrics: SystemMetrics | null;
+    previousMetrics: SystemMetrics | null;
+    loading: boolean;
+    error: string | null;
+    useMock: boolean;
+    lastUpdate: Date;
+    isRefreshing: boolean;
+    refresh: () => Promise<void>;
+}
+
+export function useMetrics(refreshInterval = 2000): MetricsWithHistory {
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+    const [previousMetrics, setPreviousMetrics] = useState<SystemMetrics | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [useMock, setUseMock] = useState(false);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const metricsRef = useRef<SystemMetrics | null>(null);
 
     const fetchMetrics = useCallback(async () => {
+        const currentMetrics = metricsRef.current;
+
         if (useMock) {
-            setMetrics(generateMockMetrics());
+            setPreviousMetrics(currentMetrics);
+            const newMetrics = generateMockMetrics();
+            setMetrics(newMetrics);
+            metricsRef.current = newMetrics;
+            setLastUpdate(new Date());
             setLoading(false);
             return;
         }
@@ -96,16 +116,28 @@ export function useMetrics(refreshInterval = 2000) {
             const response = await fetch(`${API_BASE}/metrics`);
             if (!response.ok) throw new Error('Failed to fetch metrics');
             const data = await response.json();
+            setPreviousMetrics(currentMetrics);
             setMetrics(data);
+            metricsRef.current = data;
+            setLastUpdate(new Date());
             setError(null);
         } catch {
-            // Fall back to mock data
             setUseMock(true);
-            setMetrics(generateMockMetrics());
+            setPreviousMetrics(currentMetrics);
+            const newMetrics = generateMockMetrics();
+            setMetrics(newMetrics);
+            metricsRef.current = newMetrics;
+            setLastUpdate(new Date());
         } finally {
             setLoading(false);
         }
     }, [useMock]);
+
+    const refresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await fetchMetrics();
+        setIsRefreshing(false);
+    }, [fetchMetrics]);
 
     useEffect(() => {
         fetchMetrics();
@@ -113,7 +145,7 @@ export function useMetrics(refreshInterval = 2000) {
         return () => clearInterval(interval);
     }, [fetchMetrics, refreshInterval]);
 
-    return { metrics, loading, error, useMock };
+    return { metrics, previousMetrics, loading, error, useMock, lastUpdate, isRefreshing, refresh };
 }
 
 export function useTransactions() {
@@ -144,20 +176,42 @@ export function useTransactions() {
     return transactions;
 }
 
-export function useFailoverEvents() {
+export interface FailoverEventsHook {
+    events: FailoverEvent[];
+    newEventCount: number;
+    clearNewEvents: () => void;
+}
+
+export function useFailoverEvents(): FailoverEventsHook {
     const [events, setEvents] = useState<FailoverEvent[]>([]);
     const [useMock, setUseMock] = useState(false);
+    const [newEventCount, setNewEventCount] = useState(0);
+    const previousEventsRef = useRef<string[]>([]);
 
     useEffect(() => {
         const fetchEvents = async () => {
             if (useMock) {
-                setEvents(generateMockFailoverEvents());
+                const newEvents = generateMockFailoverEvents();
+                const newIds = newEvents.map(e => e.id);
+                const addedCount = newIds.filter(id => !previousEventsRef.current.includes(id)).length;
+                if (addedCount > 0 && previousEventsRef.current.length > 0) {
+                    setNewEventCount(prev => prev + addedCount);
+                }
+                previousEventsRef.current = newIds;
+                setEvents(newEvents);
                 return;
             }
             try {
                 const response = await fetch(`${API_BASE}/failover-events`);
                 if (!response.ok) throw new Error('Failed');
-                setEvents(await response.json());
+                const newEvents = await response.json();
+                const newIds = newEvents.map((e: FailoverEvent) => e.id);
+                const addedCount = newIds.filter((id: string) => !previousEventsRef.current.includes(id)).length;
+                if (addedCount > 0 && previousEventsRef.current.length > 0) {
+                    setNewEventCount(prev => prev + addedCount);
+                }
+                previousEventsRef.current = newIds;
+                setEvents(newEvents);
             } catch {
                 setUseMock(true);
                 setEvents(generateMockFailoverEvents());
@@ -169,5 +223,28 @@ export function useFailoverEvents() {
         return () => clearInterval(interval);
     }, [useMock]);
 
-    return events;
+    const clearNewEvents = useCallback(() => {
+        setNewEventCount(0);
+    }, []);
+
+    return { events, newEventCount, clearNewEvents };
+}
+
+export function useStatusChangeDetection(
+    nodes: NodeData[] | undefined,
+    onStatusChange: (node: NodeData, previousStatus: string) => void
+) {
+    const previousStatusRef = useRef<Record<string, string>>({});
+
+    useEffect(() => {
+        if (!nodes) return;
+
+        nodes.forEach(node => {
+            const prevStatus = previousStatusRef.current[node.id];
+            if (prevStatus && prevStatus !== node.status) {
+                onStatusChange(node, prevStatus);
+            }
+            previousStatusRef.current[node.id] = node.status;
+        });
+    }, [nodes, onStatusChange]);
 }

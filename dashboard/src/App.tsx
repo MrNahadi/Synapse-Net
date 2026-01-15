@@ -6,21 +6,56 @@ import { LoadBalanceGauge } from './components/LoadBalanceGauge';
 import { FailoverEvents } from './components/FailoverEvents';
 import { SystemTopology } from './components/SystemTopology';
 import { StatsCards } from './components/StatsCards';
+import { ConnectionStatus } from './components/ConnectionStatus';
 import { Badge } from './components/ui/badge';
+import {
+    CardSkeleton,
+    StatsCardSkeleton,
+    ChartSkeleton,
+    TopologySkeleton
+} from './components/ui/skeleton';
 import { Activity, Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 function App() {
-    const { metrics, loading, useMock } = useMetrics();
+    const { metrics, previousMetrics, loading, useMock, lastUpdate, isRefreshing, refresh } = useMetrics();
     const transactions = useTransactions();
-    const failoverEvents = useFailoverEvents();
+    const { events: failoverEvents } = useFailoverEvents();
     const [darkMode, setDarkMode] = useState(true);
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', darkMode);
     }, [darkMode]);
 
-    if (loading || !metrics) {
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <header className="border-b border-border bg-card sticky top-0 z-10">
+                    <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-xl font-bold">Distributed Telecom Dashboard</h1>
+                        </div>
+                    </div>
+                </header>
+                <main className="container mx-auto px-4 py-6 space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[1, 2, 3, 4].map(i => <StatsCardSkeleton key={i} />)}
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            <TopologySkeleton />
+                        </div>
+                        <ChartSkeleton />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                        {[1, 2, 3, 4, 5].map(i => <CardSkeleton key={i} />)}
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (!metrics) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <div className="flex items-center gap-3">
@@ -43,12 +78,17 @@ function App() {
                         )}
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-muted-foreground">
-                            Last updated: {new Date().toLocaleTimeString()}
-                        </span>
+                        <ConnectionStatus
+                            connected={!useMock}
+                            useMock={useMock}
+                            lastUpdate={lastUpdate}
+                            onRefresh={refresh}
+                            isRefreshing={isRefreshing}
+                        />
                         <button
                             onClick={() => setDarkMode(!darkMode)}
                             className="p-2 rounded-lg hover:bg-muted transition-colors"
+                            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                         >
                             {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                         </button>
@@ -59,7 +99,7 @@ function App() {
             {/* Main Content */}
             <main className="container mx-auto px-4 py-6 space-y-6">
                 {/* Stats Overview */}
-                <StatsCards metrics={metrics} />
+                <StatsCards metrics={metrics} previousMetrics={previousMetrics} />
 
                 {/* Topology and Load Balance */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
