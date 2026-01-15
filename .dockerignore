@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.iml
+.kiro
+
+# Build artifacts
+target/
+core/target/
+*.class
+*.jar
+*.war
+
+# Node
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/tsconfig.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+python_simulation/__pycache__/
+venv/
+dashboard/backend/venv/
+*.egg-info/
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+core/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+README.md
+*.md
+!dashboard/backend/requirements.txt
+
+# Scripts
+build.sh
+start.bat
+
+# Test files
+*.test.js
+*.spec.js
+test_*.py

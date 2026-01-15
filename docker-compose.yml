@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Java Core System
+  core:
+    build:
+      context: .
+      dockerfile: Dockerfile.core
+    container_name: telecom-core
+    networks:
+      - telecom-network
+    environment:
+      - JAVA_OPTS=-Xmx2g -Xms512m
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Python Simulation
+  simulation:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    container_name: telecom-simulation
+    networks:
+      - telecom-network
+    volumes:
+      - ./python_simulation:/app
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - core
+
+  # Dashboard (Backend + Frontend)
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: telecom-dashboard
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    networks:
+      - telecom-network
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - core
+      - simulation
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  telecom-network:
+    driver: bridge
+
+volumes:
+  logs:

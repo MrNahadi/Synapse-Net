@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Maven](https://img.shields.io/badge/Maven-3.6+-red.svg)](https://maven.apache.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A carrier-grade edge-core-cloud distributed telecom system implementing advanced fault tolerance, load balancing, transaction management, and performance optimization across heterogeneous nodes.
@@ -65,8 +66,33 @@ graph TB
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended) 🐳
 
+The easiest way to run the entire system is using Docker:
+
+**Prerequisites:**
+- Docker Engine 20.10+ or Docker Desktop
+- Docker Compose 2.0+
+
+**Quick Start:**
+```bash
+# Linux/macOS
+./docker-start.sh
+
+# Windows
+docker-start.bat
+
+# Or manually
+docker-compose up --build
+```
+
+Access the dashboard at http://localhost:5173
+
+See [DOCKER.md](DOCKER.md) for detailed documentation.
+
+### Option 2: Local Installation
+
+**Prerequisites:**
 - Java 11 or higher
 - Maven 3.6 or higher
 - Python 3.8 or higher
