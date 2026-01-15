@@ -43,7 +43,7 @@ REM Check for Python
 where python >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     echo [WARNING] Python is not installed or not in PATH
-    echo Python simulation will be skipped
+    echo Python simulation and dashboard backend will be skipped
     set PYTHON_AVAILABLE=0
 ) else (
     set PYTHON_AVAILABLE=1
@@ -53,14 +53,14 @@ REM Check for Node.js
 where node >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     echo [WARNING] Node.js is not installed or not in PATH
-    echo Dashboard will be skipped
+    echo Dashboard frontend will be skipped
     set NODE_AVAILABLE=0
 ) else (
     set NODE_AVAILABLE=1
 )
 
 echo.
-echo [STEP 1/5] Cleaning previous builds...
+echo [STEP 1/6] Cleaning previous builds...
 echo ------------------------------------------------------------
 call mvn clean -q
 if %ERRORLEVEL% neq 0 (
@@ -70,7 +70,7 @@ if %ERRORLEVEL% neq 0 (
 echo Clean completed.
 
 echo.
-echo [STEP 2/5] Building Java project...
+echo [STEP 2/6] Building Java project...
 echo ------------------------------------------------------------
 call mvn install -DskipTests -q
 if %ERRORLEVEL% neq 0 (
@@ -80,7 +80,7 @@ if %ERRORLEVEL% neq 0 (
 echo Build completed successfully.
 
 echo.
-echo [STEP 3/5] Running Java tests...
+echo [STEP 3/6] Running Java tests...
 echo ------------------------------------------------------------
 call mvn test
 if %ERRORLEVEL% neq 0 (
@@ -90,7 +90,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
-echo [STEP 4/5] Running Python simulation...
+echo [STEP 4/6] Running Python simulation...
 echo ------------------------------------------------------------
 if %PYTHON_AVAILABLE%==1 (
     cd python_simulation
@@ -104,7 +104,7 @@ if %PYTHON_AVAILABLE%==1 (
 )
 
 echo.
-echo [STEP 5/5] Building Dashboard...
+echo [STEP 5/6] Building Dashboard...
 echo ------------------------------------------------------------
 if %NODE_AVAILABLE%==1 (
     cd dashboard
@@ -125,15 +125,55 @@ if %NODE_AVAILABLE%==1 (
 )
 
 echo.
-echo ============================================================
-echo  Build and Run Complete!
-echo ============================================================
-echo.
-echo To start the dashboard:
-echo   1. Start backend: cd dashboard\backend ^&^& python main.py
-echo   2. Start frontend: cd dashboard ^&^& npm run dev
-echo   3. Open http://localhost:5173
-echo.
+echo [STEP 6/6] Starting Dashboard Services...
+echo ------------------------------------------------------------
+if %PYTHON_AVAILABLE%==1 if %NODE_AVAILABLE%==1 (
+    echo Starting dashboard backend and frontend...
+    echo.
+    
+    REM Install Python dependencies if needed
+    cd dashboard\backend
+    pip install -r requirements.txt -q 2>nul
+    
+    REM Start backend in a new window
+    echo Starting backend server on http://localhost:8000 ...
+    start "Dashboard Backend" cmd /c "python main.py"
+    cd ..\..
+    
+    REM Wait for backend to start
+    timeout /t 3 /nobreak >nul
+    
+    REM Start frontend in a new window
+    cd dashboard
+    echo Starting frontend server on http://localhost:5173 ...
+    start "Dashboard Frontend" cmd /c "npm run dev"
+    cd ..
+    
+    REM Wait for frontend to start
+    timeout /t 5 /nobreak >nul
+    
+    REM Open browser
+    echo Opening dashboard in browser...
+    start http://localhost:5173
+    
+    echo.
+    echo ============================================================
+    echo  Dashboard is running!
+    echo ============================================================
+    echo  Backend:  http://localhost:8000
+    echo  Frontend: http://localhost:5173
+    echo.
+    echo  Close the "Dashboard Backend" and "Dashboard Frontend"
+    echo  windows to stop the servers.
+    echo ============================================================
+) else (
+    echo Skipped - Python or Node.js not available
+    echo.
+    echo ============================================================
+    echo  Build Complete!
+    echo ============================================================
+)
 
+echo.
 endlocal
 pause

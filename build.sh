@@ -17,6 +17,19 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Cleanup function
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}Shutting down servers...${NC}"
+    if [ ! -z "$BACKEND_PID" ]; then
+        kill $BACKEND_PID 2>/dev/null || true
+    fi
+    if [ ! -z "$FRONTEND_PID" ]; then
+        kill $FRONTEND_PID 2>/dev/null || true
+    fi
+    exit 0
+}
+
 # Check for Java
 if ! command -v java &> /dev/null; then
     echo -e "${RED}[ERROR] Java is not installed or not in PATH${NC}"
@@ -39,7 +52,7 @@ elif command -v python &> /dev/null; then
     PYTHON_CMD="python"
 else
     echo -e "${YELLOW}[WARNING] Python is not installed or not in PATH${NC}"
-    echo "Python simulation will be skipped"
+    echo "Python simulation and dashboard backend will be skipped"
 fi
 
 # Check for Node.js
@@ -48,23 +61,23 @@ if command -v node &> /dev/null; then
     NODE_AVAILABLE=1
 else
     echo -e "${YELLOW}[WARNING] Node.js is not installed or not in PATH${NC}"
-    echo "Dashboard will be skipped"
+    echo "Dashboard frontend will be skipped"
 fi
 
 echo ""
-echo "[STEP 1/5] Cleaning previous builds..."
+echo "[STEP 1/6] Cleaning previous builds..."
 echo "------------------------------------------------------------"
 mvn clean -q
 echo -e "${GREEN}Clean completed.${NC}"
 
 echo ""
-echo "[STEP 2/5] Building Java project..."
+echo "[STEP 2/6] Building Java project..."
 echo "------------------------------------------------------------"
 mvn install -DskipTests -q
 echo -e "${GREEN}Build completed successfully.${NC}"
 
 echo ""
-echo "[STEP 3/5] Running Java tests..."
+echo "[STEP 3/6] Running Java tests..."
 echo "------------------------------------------------------------"
 if mvn test; then
     echo -e "${GREEN}Java tests completed successfully.${NC}"
@@ -73,7 +86,7 @@ else
 fi
 
 echo ""
-echo "[STEP 4/5] Running Python simulation..."
+echo "[STEP 4/6] Running Python simulation..."
 echo "------------------------------------------------------------"
 if [ -n "$PYTHON_CMD" ]; then
     cd python_simulation
@@ -84,7 +97,7 @@ else
 fi
 
 echo ""
-echo "[STEP 5/5] Building Dashboard..."
+echo "[STEP 5/6] Building Dashboard..."
 echo "------------------------------------------------------------"
 if [ "$NODE_AVAILABLE" -eq 1 ]; then
     cd dashboard
@@ -104,12 +117,65 @@ else
 fi
 
 echo ""
-echo "============================================================"
-echo -e "${GREEN} Build and Run Complete!${NC}"
-echo "============================================================"
-echo ""
-echo -e "${BLUE}To start the dashboard:${NC}"
-echo "  1. Start backend: cd dashboard/backend && python main.py"
-echo "  2. Start frontend: cd dashboard && npm run dev"
-echo "  3. Open http://localhost:5173"
-echo ""
+echo "[STEP 6/6] Starting Dashboard Services..."
+echo "------------------------------------------------------------"
+if [ -n "$PYTHON_CMD" ] && [ "$NODE_AVAILABLE" -eq 1 ]; then
+    echo "Starting dashboard backend and frontend..."
+    echo ""
+    
+    # Set up cleanup trap
+    trap cleanup SIGINT SIGTERM
+    
+    # Install Python dependencies if needed
+    cd dashboard/backend
+    pip install -r requirements.txt -q 2>/dev/null || $PYTHON_CMD -m pip install -r requirements.txt -q 2>/dev/null || true
+    
+    # Start backend in background
+    echo -e "${BLUE}Starting backend server on http://localhost:8000 ...${NC}"
+    $PYTHON_CMD main.py &
+    BACKEND_PID=$!
+    cd ../..
+    
+    # Wait for backend to start
+    sleep 3
+    
+    # Start frontend in background
+    cd dashboard
+    echo -e "${BLUE}Starting frontend server on http://localhost:5173 ...${NC}"
+    npm run dev &
+    FRONTEND_PID=$!
+    cd ..
+    
+    # Wait for frontend to start
+    sleep 5
+    
+    # Open browser (platform-specific)
+    echo -e "${BLUE}Opening dashboard in browser...${NC}"
+    if command -v xdg-open &> /dev/null; then
+        xdg-open http://localhost:5173 2>/dev/null &
+    elif command -v open &> /dev/null; then
+        open http://localhost:5173 2>/dev/null &
+    else
+        echo "Please open http://localhost:5173 in your browser"
+    fi
+    
+    echo ""
+    echo "============================================================"
+    echo -e "${GREEN} Dashboard is running!${NC}"
+    echo "============================================================"
+    echo -e " Backend:  ${BLUE}http://localhost:8000${NC}"
+    echo -e " Frontend: ${BLUE}http://localhost:5173${NC}"
+    echo ""
+    echo " Press Ctrl+C to stop the servers."
+    echo "============================================================"
+    echo ""
+    
+    # Wait for user to stop
+    wait
+else
+    echo "Skipped - Python or Node.js not available"
+    echo ""
+    echo "============================================================"
+    echo -e "${GREEN} Build Complete!${NC}"
+    echo "============================================================"
+fi
