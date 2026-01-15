@@ -1,43 +1,67 @@
+# ============================================================
+# Distributed Telecom System - Git Ignore
+# ============================================================
+
 # Kiro IDE
 .kiro/
 
-# Java / Maven
+# ============================================================
+# Java / Maven Build Artifacts
+# ============================================================
 target/
+**/target/
 *.class
 *.jar
 *.war
 *.ear
-*.log
+*.nar
+*.rar
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+hs_err_pid*
+replay_pid*
 
-# IDE - IntelliJ
+# ============================================================
+# IDE Files
+# ============================================================
+
+# IntelliJ IDEA
 .idea/
 *.iml
 *.ipr
 *.iws
 out/
+cmake-build-*/
 
-# IDE - Eclipse
+# Eclipse
 .classpath
 .project
 .settings/
 bin/
+.metadata/
 
-# IDE - VS Code
+# VS Code
 .vscode/
+*.code-workspace
 
-# IDE - NetBeans
+# NetBeans
 nbproject/private/
 nbbuild/
-dist/
 nbdist/
 .nb-gradle/
 
-# Python
+# ============================================================
+# Python Build Artifacts
+# ============================================================
 __pycache__/
+*/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -53,45 +77,122 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
 .nox/
-.hypothesis/
+coverage.xml
 *.cover
 *.py,cover
+.hypothesis/
+nosetests.xml
 
 # Virtual environments
 venv/
 ENV/
 env/
 .venv/
+env.bak/
+venv.bak/
+pythonenv*/
 
-# Node.js / Dashboard
+# Jupyter
+.ipynb_checkpoints/
+
+# ============================================================
+# Node.js / Dashboard Build Artifacts
+# ============================================================
 node_modules/
-dashboard/node_modules/
+**/node_modules/
 dashboard/dist/
+dashboard/build/
 dashboard/.vite/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
 *.local
+.turbo/
 
-# OS generated
+# Package manager locks (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/
+**/logs/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ============================================================
+# OS Generated Files
+# ============================================================
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
+ehthumbs_vista.db
 Thumbs.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# Logs (keep structure, ignore contents)
-logs/*.log
-core/logs/*.log
-
-# Environment files
+# ============================================================
+# Environment & Secrets
+# ============================================================
 .env
+.env.*
 .env.local
 .env.*.local
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ============================================================
+# Temporary Files
+# ============================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+tmp/
+temp/
+
+# ============================================================
+# Test & Coverage Reports
+# ============================================================
+test-results/
+test-output/
+surefire-reports/
+failsafe-reports/
+coverage/
+.nyc_output/
+
+# ============================================================
+# Documentation Build
+# ============================================================
+docs/_build/
+site/
+.docusaurus/

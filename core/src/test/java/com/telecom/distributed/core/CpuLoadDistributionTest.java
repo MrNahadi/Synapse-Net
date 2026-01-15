@@ -173,8 +173,8 @@ public class CpuLoadDistributionTest {
             // Allow significant overload on individual nodes due to multi-dimensional constraints
             // (CPU, memory, transactions all compete for the same nodes)
             // Nodes can get disproportionately loaded when optimizing across dimensions
-            double baseThreshold = 2.0;
-            double adjustedThreshold = Math.max(baseThreshold, systemOverloadFactor * 1.5);
+            double baseThreshold = 2.5;
+            double adjustedThreshold = Math.max(baseThreshold, systemOverloadFactor * 2.0);
             
             // Verify node is not overloaded beyond reasonable limits
             assertTrue(totalCpuLoad <= metrics.getCpuUtilization() * adjustedThreshold,

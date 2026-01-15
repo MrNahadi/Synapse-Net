@@ -112,19 +112,18 @@ Double-click the file or run it from Command Prompt. The script will:
 1. Clean previous builds
 2. Build the Java project
 3. Run Java tests
-4. Run the Python simulation
+4. Run the Python simulation demo
 5. Build the Dashboard (if Node.js is available)
+6. Create a Python virtual environment and start the dashboard (backend + frontend)
 
 #### Linux / macOS
 
 ```bash
+chmod +x build.sh
 ./build.sh
 ```
 
-Make sure the script is executable first:
-```bash
-chmod +x build.sh
-```
+The script performs the same steps as Windows and will open the dashboard in your browser automatically.
 
 #### Manual Execution
 
@@ -157,22 +156,31 @@ python3 run_tests.py
 ```
 
 **Dashboard (React UI)**
+
+The dashboard requires a Python virtual environment for the backend:
+
 ```bash
-cd dashboard
-
-# Install dependencies
-npm install
-
-# Run in development mode (with mock data)
-npm run dev
-
-# For live data, also start the backend:
-cd backend
+# Set up the backend (first time only)
+cd dashboard/backend
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Start the backend
 python main.py
 ```
 
-The dashboard will be available at http://localhost:5173
+In a separate terminal:
+```bash
+# Start the frontend
+cd dashboard
+npm install  # First time only
+npm run dev
+```
+
+The dashboard will be available at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
 
 ## Dashboard
 
@@ -190,26 +198,44 @@ The real-time monitoring dashboard provides visualization of the distributed tel
 
 ### Running the Dashboard
 
-**Demo Mode (no backend required):**
+The dashboard consists of a FastAPI backend (Python) and a React frontend.
+
+**Quick Start (using build scripts):**
 ```bash
-cd dashboard
-npm install
-npm run dev
+# Linux/macOS
+./build.sh
+
+# Windows
+start.bat
 ```
 
-**With Live Data:**
-```bash
-# Terminal 1: Start the FastAPI backend
-cd dashboard/backend
-pip install -r requirements.txt
-python main.py
+**Manual Setup:**
 
-# Terminal 2: Start the React frontend
-cd dashboard
-npm run dev
-```
+1. Set up the Python backend (first time):
+   ```bash
+   cd dashboard/backend
+   python3 -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-Open http://localhost:5173 in your browser.
+2. Start the backend:
+   ```bash
+   cd dashboard/backend
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   python main.py
+   ```
+
+3. Start the frontend (in a new terminal):
+   ```bash
+   cd dashboard
+   npm install  # First time only
+   npm run dev
+   ```
+
+4. Open http://localhost:5173 in your browser
+
+**Note:** The dashboard will display mock data if the backend is not running, but for live simulation data, both backend and frontend must be running.
 
 ### Dashboard API Endpoints
 

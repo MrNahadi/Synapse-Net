@@ -131,13 +131,21 @@ if %PYTHON_AVAILABLE%==1 if %NODE_AVAILABLE%==1 (
     echo Starting dashboard backend and frontend...
     echo.
     
-    REM Install Python dependencies if needed
+    REM Create and activate virtual environment for backend
     cd dashboard\backend
+    if not exist venv (
+        echo Creating Python virtual environment...
+        python -m venv venv
+    )
+    
+    REM Install Python dependencies in virtual environment
+    echo Installing Python dependencies...
+    call venv\Scripts\activate.bat
     pip install -r requirements.txt -q 2>nul
     
-    REM Start backend in a new window
+    REM Start backend in a new window (with venv activated)
     echo Starting backend server on http://localhost:8000 ...
-    start "Dashboard Backend" cmd /c "python main.py"
+    start "Dashboard Backend" cmd /c "venv\Scripts\activate.bat && python main.py"
     cd ..\..
     
     REM Wait for backend to start

@@ -126,9 +126,17 @@ if [ -n "$PYTHON_CMD" ] && [ "$NODE_AVAILABLE" -eq 1 ]; then
     # Set up cleanup trap
     trap cleanup SIGINT SIGTERM
     
-    # Install Python dependencies if needed
+    # Create and activate virtual environment for backend
     cd dashboard/backend
-    pip install -r requirements.txt -q 2>/dev/null || $PYTHON_CMD -m pip install -r requirements.txt -q 2>/dev/null || true
+    if [ ! -d "venv" ]; then
+        echo -e "${BLUE}Creating Python virtual environment...${NC}"
+        $PYTHON_CMD -m venv venv
+    fi
+    
+    # Activate virtual environment and install dependencies
+    source venv/bin/activate
+    echo -e "${BLUE}Installing Python dependencies...${NC}"
+    pip install -r requirements.txt -q 2>/dev/null || pip install -r requirements.txt
     
     # Start backend in background
     echo -e "${BLUE}Starting backend server on http://localhost:8000 ...${NC}"

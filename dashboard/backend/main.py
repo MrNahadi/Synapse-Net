@@ -16,11 +16,29 @@ import random
 import time
 from datetime import datetime
 
-# Add python_simulation to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'python_simulation'))
+# Add python_simulation to path - handle both running from dashboard/backend and project root
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(backend_dir))
+python_sim_path = os.path.join(project_root, 'python_simulation')
+if python_sim_path not in sys.path:
+    sys.path.insert(0, python_sim_path)
 
-from models import NodeId, FailureType, NodeMetrics, SimulationConfig
-from load_balancer_simulation import LoadBalancerSimulation
+# Try to import simulation modules, fall back to mock mode if unavailable
+SIMULATION_AVAILABLE = False
+try:
+    from models import NodeId, FailureType, NodeMetrics, SimulationConfig
+    from load_balancer_simulation import LoadBalancerSimulation
+    SIMULATION_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import simulation modules: {e}")
+    print("Running in mock data mode only.")
+    # Define minimal NodeId enum for mock mode
+    class NodeId(Enum):
+        EDGE1 = "EDGE1"
+        EDGE2 = "EDGE2"
+        CORE1 = "CORE1"
+        CORE2 = "CORE2"
+        CLOUD1 = "CLOUD1"
 
 app = FastAPI(title="Distributed Telecom Dashboard API", version="1.0.0")
 
@@ -96,12 +114,17 @@ def get_failure_type(node_id: str) -> str:
     }
     return mapping.get(node_id, "Unknown")
 
-def calculate_status(metrics: NodeMetrics, is_failed: bool) -> NodeStatus:
+def calculate_status(metrics, is_failed: bool) -> NodeStatus:
     if is_failed:
         return NodeStatus.FAILED
-    if metrics.cpu_utilization > 80 or metrics.memory_usage > 14:
+    # Handle both real NodeMetrics objects and mock data
+    cpu = getattr(metrics, 'cpu_utilization', metrics.get('cpu', 0) if isinstance(metrics, dict) else 0)
+    memory = getattr(metrics, 'memory_usage', metrics.get('memory', 0) if isinstance(metrics, dict) else 0)
+    latency = getattr(metrics, 'latency', metrics.get('latency', 0) if isinstance(metrics, dict) else 0)
+    
+    if cpu > 80 or memory > 14:
         return NodeStatus.CRITICAL
-    if metrics.cpu_utilization > 60 or metrics.latency > 18:
+    if cpu > 60 or latency > 18:
         return NodeStatus.WARNING
     return NodeStatus.HEALTHY
 
@@ -109,7 +132,7 @@ def get_simulation_metrics() -> SystemMetrics:
     """Get current metrics from simulation or generate mock data."""
     global simulation
     
-    if simulation:
+    if SIMULATION_AVAILABLE and simulation:
         state = simulation.get_current_state()
         nodes = []
         for node_id in NodeId:
@@ -139,7 +162,7 @@ def get_simulation_metrics() -> SystemMetrics:
             totalMigrations=len(state.migration_history)
         )
     
-    # Mock data when simulation not running
+    # Mock data when simulation not running or not available
     return generate_mock_metrics()
 
 def generate_mock_metrics() -> SystemMetrics:
@@ -235,6 +258,10 @@ async def get_failover_events():
 async def start_simulation():
     """Start the load balancing simulation."""
     global simulation
+    
+    if not SIMULATION_AVAILABLE:
+        return {"status": "mock_mode", "message": "Simulation modules not available, using mock data"}
+    
     config = SimulationConfig(
         simulation_duration=300.0,
         time_step=1.0,
