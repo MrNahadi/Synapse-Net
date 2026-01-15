@@ -94,9 +94,40 @@ public class LoadBalancerImpl implements LoadBalancer {
             throw new IllegalStateException("No available nodes for service allocation");
         }
         
+        // Filter nodes that have capacity for this request
+        final double CPU_THRESHOLD = 1.3;
+        final double MEMORY_THRESHOLD = 1.2;
+        final double TRANSACTION_THRESHOLD = 1.3;
+        
+        List<NodeId> nodesWithCapacity = availableNodes.stream()
+            .filter(nodeId -> {
+                NodeMetrics metrics = currentMetrics.get(nodeId);
+                if (metrics == null) return true; // Allow if no metrics yet
+                
+                double cpuCap = cpuCapacity.getOrDefault(nodeId, metrics.getCpuUtilization());
+                double memoryCap = memoryCapacity.getOrDefault(nodeId, metrics.getMemoryUsage());
+                int transactionCap = transactionCapacity.getOrDefault(nodeId, metrics.getTransactionsPerSec());
+                
+                double currentCpu = currentCpuLoad.getOrDefault(nodeId, 0.0);
+                double currentMemory = currentMemoryLoad.getOrDefault(nodeId, 0.0);
+                int currentTransactions = currentTransactionLoad.getOrDefault(nodeId, 0);
+                
+                double cpuUtilAfter = cpuCap > 0 ? (currentCpu + request.getCpuRequirement()) / cpuCap : 0;
+                double memoryUtilAfter = memoryCap > 0 ? (currentMemory + request.getMemoryRequirement()) / memoryCap : 0;
+                double transactionUtilAfter = transactionCap > 0 ? (double)(currentTransactions + request.getTransactionLoad()) / transactionCap : 0;
+                
+                return cpuUtilAfter <= CPU_THRESHOLD && 
+                       memoryUtilAfter <= MEMORY_THRESHOLD && 
+                       transactionUtilAfter <= TRANSACTION_THRESHOLD;
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        // Use nodes with capacity, or fall back to all nodes if none have capacity
+        List<NodeId> candidateNodes = nodesWithCapacity.isEmpty() ? availableNodes : nodesWithCapacity;
+        
         // Create weighted list based on node weights
         List<NodeId> weightedNodes = new ArrayList<>();
-        for (NodeId nodeId : availableNodes) {
+        for (NodeId nodeId : candidateNodes) {
             double weight = nodeWeights.getOrDefault(nodeId, 1.0);
             int copies = Math.max(1, (int) (weight * 10)); // Scale weights to integer copies
             for (int i = 0; i < copies; i++) {
@@ -116,25 +147,17 @@ public class LoadBalancerImpl implements LoadBalancer {
     }
     
     private NodeId selectNodeLeastConnections(ServiceRequest request) {
-        return serviceAllocations.values().stream()
-                .collect(Collectors.groupingBy(nodeId -> nodeId, Collectors.counting()))
-                .entrySet().stream()
-                .min(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(getAvailableNodes().get(0));
-    }
-    
-    private NodeId selectNodeResourceAware(ServiceRequest request) {
         List<NodeId> availableNodes = getAvailableNodes();
-        if (availableNodes.isEmpty()) {
-            throw new IllegalStateException("No available nodes for service allocation");
-        }
         
-        // Calculate scores for all nodes based on current load and capacity
-        NodeId bestNode = availableNodes.stream()
-            .filter(nodeId -> currentMetrics.containsKey(nodeId))
-            .min(Comparator.comparingDouble(nodeId -> {
+        // Filter nodes that have capacity for this request
+        final double CPU_THRESHOLD = 1.3;
+        final double MEMORY_THRESHOLD = 1.2;
+        final double TRANSACTION_THRESHOLD = 1.3;
+        
+        List<NodeId> nodesWithCapacity = availableNodes.stream()
+            .filter(nodeId -> {
                 NodeMetrics metrics = currentMetrics.get(nodeId);
+                if (metrics == null) return true;
                 
                 double cpuCap = cpuCapacity.getOrDefault(nodeId, metrics.getCpuUtilization());
                 double memoryCap = memoryCapacity.getOrDefault(nodeId, metrics.getMemoryUsage());
@@ -144,21 +167,64 @@ public class LoadBalancerImpl implements LoadBalancer {
                 double currentMemory = currentMemoryLoad.getOrDefault(nodeId, 0.0);
                 int currentTransactions = currentTransactionLoad.getOrDefault(nodeId, 0);
                 
-                // Calculate utilization ratios after adding this request
-                double cpuUtilAfter = (currentCpu + request.getCpuRequirement()) / cpuCap;
-                double memoryUtilAfter = (currentMemory + request.getMemoryRequirement()) / memoryCap;
-                double transactionUtilAfter = (double)(currentTransactions + request.getTransactionLoad()) / transactionCap;
+                double cpuUtilAfter = cpuCap > 0 ? (currentCpu + request.getCpuRequirement()) / cpuCap : 0;
+                double memoryUtilAfter = memoryCap > 0 ? (currentMemory + request.getMemoryRequirement()) / memoryCap : 0;
+                double transactionUtilAfter = transactionCap > 0 ? (double)(currentTransactions + request.getTransactionLoad()) / transactionCap : 0;
                 
-                // Weighted average utilization (CPU is most important for CPU load distribution)
-                double weightedUtilization = cpuUtilAfter * 0.6 + memoryUtilAfter * 0.2 + transactionUtilAfter * 0.2;
+                return cpuUtilAfter <= CPU_THRESHOLD && 
+                       memoryUtilAfter <= MEMORY_THRESHOLD && 
+                       transactionUtilAfter <= TRANSACTION_THRESHOLD;
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        List<NodeId> candidateNodes = nodesWithCapacity.isEmpty() ? availableNodes : nodesWithCapacity;
+        
+        // Count connections per node
+        Map<NodeId, Long> connectionCounts = serviceAllocations.values().stream()
+            .filter(candidateNodes::contains)
+            .collect(java.util.stream.Collectors.groupingBy(nodeId -> nodeId, java.util.stream.Collectors.counting()));
+        
+        // Select node with least connections
+        NodeId selectedNode = candidateNodes.stream()
+            .min(Comparator.comparingLong(nodeId -> connectionCounts.getOrDefault(nodeId, 0L)))
+            .orElse(availableNodes.get(0));
+        
+        updateLoadAfterAllocation(selectedNode, request);
+        serviceAllocations.put(request.getServiceId(), selectedNode);
+        
+        return selectedNode;
+    }
+    
+    private NodeId selectNodeResourceAware(ServiceRequest request) {
+        List<NodeId> availableNodes = getAvailableNodes();
+        if (availableNodes.isEmpty()) {
+            throw new IllegalStateException("No available nodes for service allocation");
+        }
+        
+        // Select the best node based on utilization ratio - prefer nodes with lowest utilization
+        // relative to their capacity. This ensures proportional distribution.
+        NodeId bestNode = availableNodes.stream()
+            .filter(nodeId -> currentMetrics.containsKey(nodeId))
+            .min(Comparator.comparingDouble(nodeId -> {
+                NodeMetrics metrics = currentMetrics.get(nodeId);
+                if (metrics == null) return Double.MAX_VALUE;
                 
-                // Return score (lower is better)
-                // Heavily penalize nodes that would exceed capacity
-                if (cpuUtilAfter > 1.4 || memoryUtilAfter > 1.4 || transactionUtilAfter > 1.4) {
-                    return weightedUtilization * 10.0; // Heavy penalty for overload
-                }
+                double cpuCap = cpuCapacity.getOrDefault(nodeId, metrics.getCpuUtilization());
+                double memoryCap = memoryCapacity.getOrDefault(nodeId, metrics.getMemoryUsage());
+                int transactionCap = transactionCapacity.getOrDefault(nodeId, metrics.getTransactionsPerSec());
                 
-                return weightedUtilization;
+                double currentCpu = currentCpuLoad.getOrDefault(nodeId, 0.0);
+                double currentMemory = currentMemoryLoad.getOrDefault(nodeId, 0.0);
+                int currentTransactions = currentTransactionLoad.getOrDefault(nodeId, 0);
+                
+                // Calculate utilization ratios AFTER adding this request
+                double cpuUtilAfter = cpuCap > 0 ? (currentCpu + request.getCpuRequirement()) / cpuCap : 1.0;
+                double memoryUtilAfter = memoryCap > 0 ? (currentMemory + request.getMemoryRequirement()) / memoryCap : 1.0;
+                double transactionUtilAfter = transactionCap > 0 ? (double)(currentTransactions + request.getTransactionLoad()) / transactionCap : 1.0;
+                
+                // Return the MAX utilization ratio - this ensures we don't overload any single dimension
+                // By minimizing the max utilization, we spread load proportionally across all nodes
+                return Math.max(Math.max(cpuUtilAfter, memoryUtilAfter), transactionUtilAfter);
             }))
             .orElse(availableNodes.get(0));
         

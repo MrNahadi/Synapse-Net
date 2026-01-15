@@ -44,7 +44,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -72,6 +71,13 @@ ENV/
 env/
 .venv/
 
+# Node.js / Dashboard
+node_modules/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+*.local
+
 # OS generated
 .DS_Store
 .DS_Store?
@@ -84,3 +90,8 @@ Thumbs.db
 # Logs (keep structure, ignore contents)
 logs/*.log
 core/logs/*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local

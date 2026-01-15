@@ -3,6 +3,7 @@
 [![Java](https://img.shields.io/badge/Java-11-orange.svg)](https://www.oracle.com/java/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Maven](https://img.shields.io/badge/Maven-3.6+-red.svg)](https://maven.apache.org/)
+[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A carrier-grade edge-core-cloud distributed telecom system implementing advanced fault tolerance, load balancing, transaction management, and performance optimization across heterogeneous nodes.
@@ -20,6 +21,7 @@ This project implements a comprehensive distributed telecom system that intercon
 - **Performance Optimization**: Real-time bottleneck analysis and throughput maximization
 - **Redundancy & Failover**: Risk-based replication strategies with automated failover
 - **Property-Based Testing**: Comprehensive validation using QuickCheck for Java
+- **Real-Time Dashboard**: React-based monitoring UI with live metrics visualization
 
 ## Architecture
 
@@ -68,6 +70,7 @@ graph TB
 - Java 11 or higher
 - Maven 3.6 or higher
 - Python 3.8 or higher
+- Node.js 18+ (for dashboard)
 - Git
 
 ### Installation
@@ -89,14 +92,48 @@ graph TB
    pip install -r requirements.txt
    ```
 
+4. Install Dashboard dependencies (optional)
+   ```bash
+   cd dashboard
+   npm install
+   ```
+
 ### Running the System
 
-#### Java System
+The easiest way to build and run everything is using the provided scripts:
+
+#### Windows
+
+```cmd
+start.bat
+```
+
+Double-click the file or run it from Command Prompt. The script will:
+1. Clean previous builds
+2. Build the Java project
+3. Run Java tests
+4. Run the Python simulation
+5. Build the Dashboard (if Node.js is available)
+
+#### Linux / macOS
 
 ```bash
-# Run the main distributed system
-cd core
-mvn exec:java -Dexec.mainClass="com.telecom.distributed.core.DistributedTelecomSystem"
+./build.sh
+```
+
+Make sure the script is executable first:
+```bash
+chmod +x build.sh
+```
+
+#### Manual Execution
+
+If you prefer to run components individually:
+
+**Java System**
+```bash
+# Build the project
+mvn clean install
 
 # Run tests
 mvn test
@@ -105,8 +142,7 @@ mvn test
 mvn test -Dtest="*PropertyTest"
 ```
 
-#### Python Simulation
-
+**Python Simulation**
 ```bash
 cd python_simulation
 
@@ -119,6 +155,73 @@ python3 redundancy_demo.py
 # Run all tests
 python3 run_tests.py
 ```
+
+**Dashboard (React UI)**
+```bash
+cd dashboard
+
+# Install dependencies
+npm install
+
+# Run in development mode (with mock data)
+npm run dev
+
+# For live data, also start the backend:
+cd backend
+pip install -r requirements.txt
+python main.py
+```
+
+The dashboard will be available at http://localhost:5173
+
+## Dashboard
+
+The real-time monitoring dashboard provides visualization of the distributed telecom system.
+
+### Features
+
+- **Node Status**: Live status cards for all 5 nodes (Edge1, Edge2, Core1, Core2, Cloud1)
+- **System Topology**: Interactive visualization of the 3-tier architecture
+- **Metrics Charts**: CPU, Memory, and Latency bar charts
+- **Load Balance Gauge**: Real-time load distribution index
+- **Transaction Monitor**: Recent transactions with status tracking
+- **Failover Events**: Fault tolerance and recovery event log
+- **Dark/Light Mode**: Theme toggle support
+
+### Running the Dashboard
+
+**Demo Mode (no backend required):**
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+
+**With Live Data:**
+```bash
+# Terminal 1: Start the FastAPI backend
+cd dashboard/backend
+pip install -r requirements.txt
+python main.py
+
+# Terminal 2: Start the React frontend
+cd dashboard
+npm run dev
+```
+
+Open http://localhost:5173 in your browser.
+
+### Dashboard API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/metrics` | GET | Current system metrics for all nodes |
+| `/api/nodes/{id}` | GET | Specific node details |
+| `/api/transactions` | GET | Recent transaction list |
+| `/api/failover-events` | GET | Recent failover events |
+| `/api/simulation/start` | POST | Start the simulation |
+| `/api/simulation/stop` | POST | Stop the simulation |
+| `/ws/metrics` | WebSocket | Real-time metrics stream |
 
 ## Core Components
 
@@ -141,6 +244,13 @@ python3 run_tests.py
 - **FailureInjector**: Simulates crash, omission, and Byzantine failures
 - **NetworkDelaySimulator**: Realistic network latency and jitter simulation
 - **AdaptiveMigrationEngine**: Intelligent service migration decisions
+
+### Dashboard Components
+
+- **Frontend**: React 18 + TypeScript + Tailwind CSS v4 + shadcn/ui design system
+- **Backend**: FastAPI with WebSocket support for real-time updates
+- **Charts**: Recharts for data visualization
+- **State**: Custom hooks with automatic polling and WebSocket fallback
 
 ## Testing
 
@@ -195,10 +305,10 @@ SystemConfiguration config = new SystemConfiguration.Builder()
 
 ## Documentation
 
-- **[DOCUMENTATION.md](DOCUMENTATION.md)**: Comprehensive technical documentation with detailed architecture, algorithms, and implementation details
-- **[Requirements](/.kiro/specs/distributed-telecom-system/requirements.md)**: Complete requirements specification
-- **[Design](/.kiro/specs/distributed-telecom-system/design.md)**: System design and architecture
-- **[Tasks](/.kiro/specs/distributed-telecom-system/tasks.md)**: Implementation task breakdown
+- **[DOCUMENTATION.md](docs/DOCUMENTATION.md)**: Comprehensive technical documentation with detailed architecture, algorithms, and implementation details
+- **[Dashboard README](dashboard/README.md)**: Dashboard setup and development guide
+- **[Requirements](docs/requirements.md)**: Complete requirements specification
+- **[Design](docs/design.md)**: System design and architecture
 
 ## Contributing
 
