@@ -80,9 +80,8 @@ echo.
 echo ============================================================
 echo  Distributed Telecom System is Running!
 echo ============================================================
-echo  Dashboard Frontend: http://localhost:5173
-echo  Dashboard Backend:  http://localhost:8000
-echo  API Documentation:  http://localhost:8000/docs
+echo  Dashboard (Frontend + Backend): http://localhost:8000
+echo  API Documentation:              http://localhost:8000/docs
 echo.
 echo  View logs:    %COMPOSE_CMD% logs -f
 echo  Stop:         %COMPOSE_CMD% down
@@ -91,7 +90,7 @@ echo ============================================================
 echo.
 
 REM Open browser
-start http://localhost:5173
+start http://localhost:8000
 goto :end
 
 :stop

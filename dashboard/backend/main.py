@@ -5,6 +5,8 @@ Exposes real-time metrics from the Python simulation.
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from enum import Enum
@@ -16,18 +18,32 @@ import random
 import time
 from datetime import datetime
 
-# Add python_simulation to path - handle both running from dashboard/backend and project root
+# Add python_simulation to path - handle both running from dashboard/backend and Docker container
 backend_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(backend_dir))
-python_sim_path = os.path.join(project_root, 'python_simulation')
-if python_sim_path not in sys.path:
-    sys.path.insert(0, python_sim_path)
+
+# Try multiple possible locations for python_simulation
+possible_paths = [
+    os.path.join(project_root, 'python_simulation'),  # Local dev: project_root/python_simulation
+    os.path.join(os.path.dirname(backend_dir), 'python_simulation'),  # Docker: /app/python_simulation
+    '/app/python_simulation',  # Docker absolute path
+]
+
+for python_sim_path in possible_paths:
+    if os.path.exists(python_sim_path) and python_sim_path not in sys.path:
+        sys.path.insert(0, python_sim_path)
+        break
 
 # Try to import simulation modules, fall back to mock mode if unavailable
 SIMULATION_AVAILABLE = False
+LoadBalancerSimulation = None
+SimulationConfig = None
+
 try:
-    from models import NodeId, FailureType, NodeMetrics, SimulationConfig
-    from load_balancer_simulation import LoadBalancerSimulation
+    from models import NodeId, FailureType, NodeMetrics, SimulationConfig as _SimulationConfig
+    from load_balancer_simulation import LoadBalancerSimulation as _LoadBalancerSimulation
+    LoadBalancerSimulation = _LoadBalancerSimulation
+    SimulationConfig = _SimulationConfig
     SIMULATION_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import simulation modules: {e}")
@@ -52,7 +68,7 @@ app.add_middleware(
 )
 
 # Global simulation instance
-simulation: Optional[LoadBalancerSimulation] = None
+simulation = None
 connected_clients: List[WebSocket] = []
 
 class NodeStatus(str, Enum):
@@ -204,8 +220,23 @@ def generate_mock_metrics() -> SystemMetrics:
         totalMigrations=random.randint(5, 20)
     )
 
+# Mount static files for frontend (if available)
+frontend_dist = os.path.join(os.path.dirname(backend_dir), 'frontend', 'dist')
+if os.path.exists(frontend_dist):
+    # Mount static assets
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
 @app.get("/")
 async def root():
+    """Serve the React frontend or API info."""
+    frontend_dist = os.path.join(os.path.dirname(backend_dir), 'frontend', 'dist')
+    index_path = os.path.join(frontend_dist, "index.html")
+    
+    # If frontend exists, serve it
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    
+    # Otherwise return API info
     return {"message": "Distributed Telecom Dashboard API", "status": "running"}
 
 @app.get("/api/metrics", response_model=SystemMetrics)
@@ -293,6 +324,28 @@ async def websocket_metrics(websocket: WebSocket):
             await asyncio.sleep(1)  # Update every second
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
+
+# Catch-all route for frontend (must be last)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Serve the React frontend for all non-API routes."""
+    # Don't serve frontend for API or WebSocket routes
+    if full_path.startswith("api/") or full_path.startswith("ws/"):
+        return {"error": "Not found"}
+    
+    frontend_dist = os.path.join(os.path.dirname(backend_dir), 'frontend', 'dist')
+    
+    # Try to serve the requested file
+    file_path = os.path.join(frontend_dist, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    # Otherwise serve index.html (for client-side routing)
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    
+    return {"error": "Frontend not found"}
 
 if __name__ == "__main__":
     import uvicorn

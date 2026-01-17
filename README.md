@@ -99,6 +99,64 @@ See [DOCKER.md](DOCKER.md) for detailed documentation.
 - Node.js 18+ (for dashboard)
 - Git
 
+### To set up the requirements (On Linux)
+1. Update and Prepare System
+   ```bash
+   sudo apt update && sudo apt upgrade -y
+   sudo apt install -y curl wget git build-essential software-properties-common apt-transport-https ca-certificates
+   ```
+2. Core Languages & Build Tool
+   ```bash
+   sudo apt install -y openjdk-21-jdk
+   # Verify installation
+   java -version
+   ```
+   Maven: Used for managing your Java multi-module project.
+   ```bash
+   sudo apt install -y maven
+   # Verify installation
+   mvn -version
+   ```
+3. Python
+   ```bash
+   sudo apt install -y python3 python3-pip python3-venv
+   ```
+3. Networking & Communication (Protobuf)
+   ```bash
+   sudo apt install -y protobuf-compiler
+   # Verify installation
+   protoc --version
+   ```
+4. Containerization (Docker & Docker Compose)
+   ```bash
+   # Add Docker's official GPG key:
+   sudo install -m 0755 -d /etc/apt/keyrings
+   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+   sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+   # Add the repository to Apt sources:
+   echo \
+   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+   sudo apt update
+   sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+   # Post-install: Run docker without sudo
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+5. Python Simulation Libraries
+   ```bash
+   # Create and activate a virtual environment
+   python3 -m venv telecom_env
+   source telecom_env/bin/activate
+
+   # Install simulation and optimization libraries
+   pip install simpy numpy pandas scipy scikit-learn
+   ```
+
 ### Installation
 
 1. Clone the repository

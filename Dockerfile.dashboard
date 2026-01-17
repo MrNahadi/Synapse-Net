@@ -30,14 +30,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY dashboard/backend/requirements.txt ./backend/
 COPY dashboard/backend/main.py ./backend/
 
+# Copy python_simulation modules for import
+COPY python_simulation/*.py ./python_simulation/
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Expose ports
-EXPOSE 8000 5173
+# Expose port (FastAPI serves both API and frontend)
+EXPOSE 8000
 
 # Start the backend server
 WORKDIR /app/backend
